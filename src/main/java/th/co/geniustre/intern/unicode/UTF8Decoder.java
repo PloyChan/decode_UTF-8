@@ -1,36 +1,27 @@
 package th.co.geniustre.intern.unicode;
 
 public class UTF8Decoder {
-    public String decode(byte[] utf8s){
+    public String decode(byte[] utf8s) {
         Unicode unicode = new Unicode();
         StringBuilder str = new StringBuilder();
-        final Integer PREFIX = 0b1110_0000;
-        final Integer PREFIX_FOLLOW = 0b10000_0000;
-        Integer[] result = new Integer[utf8s.length];;
-        int first = 0;
-        int follow = 0;
-        int total = 0;
+        final int PREFIX = 0b1110_0000;
+        final int BIT_MASK_STARTER = 0b0000_1111;
+        final int BIT_MASK_FOLLOWER = 0b0011_1111;
+        int result = 0, total = 0, i = 0;
 
-        for(int i = 0; i< utf8s.length; i++){
-            if(PREFIX.equals(PREFIX & utf8s[i])){
-                first = utf8s[i] & 0b0000_1111;
-                result[i] = first << 16;
-            } else if (PREFIX_FOLLOW.equals(PREFIX_FOLLOW & utf8s[i])){
-                follow = utf8s[i] & 0b0011_1111;
-                if(first == 0){
-                    result[i] = follow << 6;
-                } else {
-                    result[i] = follow;
-                }
-                first = follow;
+        while (i < utf8s.length) {
+            if (PREFIX == (PREFIX & utf8s[i])) {
+                total = utf8s[i] & BIT_MASK_STARTER;
+                result += total << 12;
+                total = utf8s[i + 1] & BIT_MASK_FOLLOWER;
+                result += total << 6;
+                total = utf8s[i + 2] & BIT_MASK_FOLLOWER;
+                result += total;
+                String st = unicode.unicodeChars.get(result).toString();
+                str.append(st);
+                result = 0;
             }
-            total += result[i];
-            if((i+1) % 3 == 0){
-                String unicodeStr = unicode.unicodeChars.get(total).toString();
-                str.append(unicodeStr);
-                total = 0;
-            }
-
+            i++;
         }
         return str.toString();
     }
